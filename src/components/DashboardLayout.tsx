@@ -68,10 +68,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Main content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Header */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-3 px-6 flex justify-between items-center shadow-sm">
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-4 px-8 flex justify-between items-center shadow-sm">
           <h1 className="text-xl font-bold">{title}</h1>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <NewIncidentDialog 
               onAddIncident={onAddIncident}
               trigger={
@@ -113,7 +113,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         
         <div className="flex flex-1 overflow-hidden">
           {/* Main dashboard area */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto p-8">
             {children}
           </div>
           
@@ -137,6 +137,19 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             />
           </AnimatePresence>
         </div>
+
+        {/* Footer */}
+        <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 px-8">
+          <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+            <div>
+              © {new Date().getFullYear()} Vigilant Incident View. All rights reserved.
+            </div>
+            <div className="flex items-center gap-4">
+              <a href="#" className="hover:text-gray-700 dark:hover:text-gray-300">Privacy Policy</a>
+              <a href="#" className="hover:text-gray-700 dark:hover:text-gray-300">Terms of Service</a>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
