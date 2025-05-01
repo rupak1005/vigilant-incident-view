@@ -25,18 +25,23 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       transition={{ duration: 0.3 }}
     >
       {/* Logo/Header area */}
-      <div className="p-4 border-b border-gray-800 flex items-center justify-between">
-        {!collapsed && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="font-bold text-lg text-white"
-          >
-            Vigilant
-          </motion.div>
-        )}
+      <div className="py-3 px-4 border-b border-gray-800 flex items-center justify-between">
+        <div className="flex items-center overflow-hidden">
+          <img src="/logo.svg" alt="Vigilant Logo" className="h-7 w-7" />
+          
+          {!collapsed && (
+            <motion.div 
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 'auto' }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.2 }}
+              className="font-bold text-lg text-white ml-2 truncate"
+            >
+              Vigilant
+            </motion.div>
+          )}
+        </div>
+        
         <Button 
           variant="ghost" 
           size="sm"
@@ -48,15 +53,15 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </div>
 
       {/* Nav Menu */}
-      <div className="flex-grow py-4">
-        <ul className="space-y-2">
+      <div className="flex-grow py-2">
+        <ul className="space-y-1">
           {menuItems.map((item, index) => (
             <li key={index}>
               <Button
                 variant={item.active ? "secondary" : "ghost"}
                 className={`w-full flex items-center justify-${collapsed ? 'center' : 'start'} px-4 py-2`}
               >
-                <span className={`${item.active ? 'text-primary' : 'text-gray-400'}`}>
+                <span className={`${item.active ? 'text-indigo-700 dark:text-primary' : 'text-gray-500 dark:text-gray-400'}`}>
                   {item.icon}
                 </span>
                 
@@ -66,7 +71,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="ml-3 text-white"
+                    className={`ml-3 ${item.active ? 'font-semibold text-indigo-700 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}
                   >
                     {item.label}
                   </motion.span>
@@ -78,9 +83,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-800">
+      <div className="p-5 pb-6 mt-2 border-t border-gray-800 bg-gray-950">
         <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+          <div className="w-9 h-9 rounded-full bg-indigo-600/40 flex items-center justify-center text-white font-bold shadow-sm">
             V
           </div>
           
@@ -90,7 +95,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="ml-3 text-sm text-gray-300"
+              className="ml-4 text-sm font-medium text-white"
             >
               Vigilant v1.0
             </motion.div>

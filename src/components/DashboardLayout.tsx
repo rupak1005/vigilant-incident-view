@@ -6,6 +6,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import AISummary from './AISummary';
 import Sidebar from './Sidebar';
 import FiltersPanel from './FiltersPanel';
+import NewIncidentDialog from './NewIncidentDialog';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -24,7 +25,11 @@ interface DashboardLayoutProps {
   onResetFilters: () => void;
   isResetDisabled: boolean;
   // Actions
-  onAddClick: () => void;
+  onAddIncident: (incident: {
+    title: string;
+    description: string;
+    severity: 'Low' | 'Medium' | 'High';
+  }) => void;
   onExportClick: () => void;
   incidents: any[];
 }
@@ -44,7 +49,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   onSortOrderChange,
   onResetFilters,
   isResetDisabled,
-  onAddClick,
+  onAddIncident,
   onExportClick,
   incidents
 }) => {
@@ -53,7 +58,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Sidebar */}
       <Sidebar 
         collapsed={sidebarCollapsed} 
@@ -63,19 +68,23 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Main content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Header */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-4 px-6 flex justify-between items-center">
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-3 px-6 flex justify-between items-center shadow-sm">
           <h1 className="text-xl font-bold">{title}</h1>
           
           <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={onAddClick}
-              className="flex items-center gap-2"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span className="hidden sm:inline">New Incident</span>
-            </Button>
+            <NewIncidentDialog 
+              onAddIncident={onAddIncident}
+              trigger={
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-2"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                  <span className="hidden sm:inline">New Incident</span>
+                </Button>
+              }
+            />
             
             <Button 
               variant="outline" 
@@ -104,7 +113,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         
         <div className="flex flex-1 overflow-hidden">
           {/* Main dashboard area */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto">
             {children}
           </div>
           
