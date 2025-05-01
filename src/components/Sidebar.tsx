@@ -84,75 +84,77 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       {/* Footer */}
       <div className="p-5 pb-6 mt-2 border-t border-gray-800 bg-gray-950">
-        <div className="flex items-center mb-4">
-          <div className="w-9 h-9 rounded-full bg-indigo-600/40 flex items-center justify-center text-white font-bold shadow-sm">
-            V
-          </div>
-          
-          {!collapsed && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="ml-4 text-sm font-medium text-white"
-            >
-              Vigilant v1.0
-            </motion.div>
-          )}
-        </div>
-        
-        {/* Developer Links */}
-        {!collapsed ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, delay: 0.1 }}
-            className="mt-3 space-y-2"
-          >
-            <a 
-              href="https://rupak-s.netlify.app/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors duration-200 group"
-            >
-              <ExternalLink className="h-3.5 w-3.5 group-hover:text-indigo-400 transition-colors duration-200" />
-              Portfolio
-            </a>
-            <a 
-              href="https://drive.google.com/file/d/1DkVjDSGFoqvA2bqGO2WXtNRJQnR6m89z/view" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors duration-200 group"
-            >
-              <FileText className="h-3.5 w-3.5 group-hover:text-indigo-400 transition-colors duration-200" />
-              Resume
-            </a>
-          </motion.div>
-        ) : (
-          <div className="flex flex-col items-center gap-3 mt-3">
-            <a 
-              href="https://rupak-s.netlify.app/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-gray-400 hover:text-white transition-colors duration-200"
-              title="Portfolio"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </a>
-            <a 
-              href="https://drive.google.com/file/d/1DkVjDSGFoqvA2bqGO2WXtNRJQnR6m89z/view" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-gray-400 hover:text-white transition-colors duration-200"
-              title="Resume"
-            >
-              <FileText className="h-4 w-4" />
-            </a>
-          </div>
-        )}
-      </div>
+
+  {/* Developer Links ABOVE */}
+  {!collapsed ? (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2, delay: 0.1 }}
+      className="mb-4 space-y-2"
+    >
+      <a 
+        href="https://rupak-s.netlify.app/" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors duration-200 group"
+      >
+        <ExternalLink className="h-3.5 w-3.5 group-hover:text-indigo-400 transition-colors duration-200" />
+        Portfolio
+      </a>
+      <a 
+        href="https://drive.google.com/file/d/1yIF1cpF3Uz6M7-_TP0gn18bzplbX-_kf/view?usp=sharing" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors duration-200 group"
+      >
+        <FileText className="h-3.5 w-3.5 group-hover:text-indigo-400 transition-colors duration-200" />
+        Resume
+      </a>
+    </motion.div>
+  ) : (
+    <div className="flex flex-col items-center gap-3 mb-4">
+      <a 
+        href="https://rupak-s.netlify.app/" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="text-gray-400 hover:text-white transition-colors duration-200"
+        title="Portfolio"
+      >
+        <ExternalLink className="h-4 w-4" />
+      </a>
+      <a 
+        href="https://drive.google.com/file/d/1DkVjDSGFoqvA2bqGO2WXtNRJQnR6m89z/view" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="text-gray-400 hover:text-white transition-colors duration-200"
+        title="Resume"
+      >
+        <FileText className="h-4 w-4" />
+      </a>
+    </div>
+  )}
+
+  {/* Avatar + Label */}
+  <div className="flex items-center">
+    <div className="w-9 h-9 rounded-full bg-indigo-600/40 flex items-center justify-center text-white font-bold shadow-sm">
+      V
+    </div>
+    
+    {!collapsed && (
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="ml-4 text-sm font-medium text-white"
+      >
+        Vigilant v1.0
+      </motion.div>
+    )}
+  </div>
+</div>
     </motion.div>
   );
 } 
