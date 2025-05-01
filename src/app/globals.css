@@ -1,0 +1,38 @@
+/* Panel Styles */
+.right-panel {
+  @apply bg-white/98 dark:bg-gray-950/98;
+  @apply border-l border-gray-200/40 dark:border-gray-800/40;
+}
+
+.glass-effect {
+  @apply bg-white/98 dark:bg-gray-950/98;
+  @apply backdrop-blur-sm;
+}
+
+.panel-button {
+  @apply transition-all duration-200;
+  @apply hover:bg-gray-100/80 dark:hover:bg-gray-900/80;
+  @apply active:bg-gray-200/80 dark:active:bg-gray-800/80;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(99, 102, 241, 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(99, 102, 241, 0.5);
+} 

@@ -1,15 +1,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Home, AlertTriangle, Settings, BarChart2, ExternalLink, FileText } from 'lucide-react';
+import { Home, AlertTriangle, Settings, BarChart2, ExternalLink, FileText, X } from 'lucide-react';
 
 type SidebarProps = {
-  collapsed: boolean;
-  onToggle: () => void;
+  onToggle?: () => void;
+  isMobile?: boolean;
 };
 
-export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
-  // Menu items for the sidebar
+export default function Sidebar({ onToggle, isMobile = false }: SidebarProps) {
   const menuItems = [
     { icon: <Home className="h-5 w-5" />, label: 'Dashboard', active: true },
     { icon: <AlertTriangle className="h-5 w-5" />, label: 'Incidents', active: false },
@@ -18,64 +17,64 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   ];
 
   return (
-    <motion.div 
-      className="h-screen bg-gray-900 dark:bg-gray-950 border-r border-gray-800 flex flex-col"
-      initial={{ width: collapsed ? 70 : 240 }}
-      animate={{ width: collapsed ? 70 : 240 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div className={`${
+      isMobile 
+        ? 'w-full' 
+        : 'h-screen w-64 bg-white/98 dark:bg-gray-950/98'
+    } flex flex-col`}>
       {/* Logo/Header area */}
-      <div className="py-3 px-4 border-b border-gray-800 flex items-center justify-between">
-        <div className="flex items-center overflow-hidden">
-          <img src="/logo.svg" alt="Vigilant Logo" className="h-7 w-7" />
-          
-          {!collapsed && (
-            <motion.div 
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: 'auto' }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.2 }}
-              className="font-bold text-lg text-white ml-2 truncate"
-            >
-              Vigilant
-            </motion.div>
-          )}
+      <div className={`py-4 px-4 sm:px-6 ${
+        isMobile 
+          ? 'bg-white/98 dark:bg-gray-950/98 flex items-center justify-between border-b border-gray-200/40 dark:border-gray-800/40' 
+          : 'border-b border-gray-200/40 dark:border-gray-800/40'
+      }`}>
+        <div className="flex items-center">
+          <img src="/logo.svg" alt="Vigilant Logo" className="h-7 sm:h-8 w-7 sm:w-8" />
+          <div className="font-bold text-lg sm:text-xl ml-3 truncate text-gray-900 dark:text-white">
+            {isMobile ? 'Menu' : 'Vigilant'}
+          </div>
         </div>
         
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={onToggle}
-          className="ml-auto text-gray-400 hover:text-white"
-        >
-          {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
-        </Button>
+        {isMobile && onToggle && (
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={onToggle}
+            className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white panel-button"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        )}
       </div>
 
       {/* Nav Menu */}
-      <div className="flex-grow py-2">
-        <ul className="space-y-1">
+      <div className="flex-grow py-4 px-3 overflow-y-auto custom-scrollbar">
+        <ul className="space-y-1.5">
           {menuItems.map((item, index) => (
             <li key={index}>
               <Button
                 variant={item.active ? "secondary" : "ghost"}
-                className={`w-full flex items-center justify-${collapsed ? 'center' : 'start'} px-4 py-2`}
+                className={`w-full flex items-center justify-start px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg transition-all duration-200 ${
+                  item.active 
+                    ? 'panel-item-active text-indigo-600 dark:text-indigo-400' 
+                    : `${isMobile 
+                        ? 'text-gray-700 dark:text-gray-300' 
+                        : 'text-gray-600 dark:text-gray-400'} 
+                       hover:text-indigo-600 dark:hover:text-indigo-400 panel-button`
+                }`}
               >
-                <span className={`${item.active ? 'text-indigo-700 dark:text-primary' : 'text-gray-500 dark:text-gray-400'}`}>
+                <span className={`${
+                  item.active 
+                    ? 'text-indigo-600 dark:text-indigo-400' 
+                    : isMobile 
+                      ? 'text-gray-700 dark:text-gray-300' 
+                      : 'text-gray-600 dark:text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
+                } transition-colors duration-200`}>
                   {item.icon}
                 </span>
-                
-                {!collapsed && (
-                  <motion.span 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className={`ml-3 ${item.active ? 'font-semibold text-indigo-700 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}
-                  >
-                    {item.label}
-                  </motion.span>
-                )}
+                <span className="ml-3 text-sm sm:text-base">
+                  {item.label}
+                </span>
               </Button>
             </li>
           ))}
@@ -83,77 +82,41 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </div>
 
       {/* Footer */}
-      <div className="p-5 pb-6 mt-2 border-t border-gray-800 bg-gray-950">
-        {/* Developer Links */}
-        {!collapsed ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, delay: 0.1 }}
-            className="mb-6 space-y-3"
-          >
+      {!isMobile && (
+        <div className="p-4 sm:p-6 border-t border-gray-200/40 dark:border-gray-800/40 bg-gray-50/50 dark:bg-gray-950/50">
+          {/* Developer Links */}
+          <div className="mb-4 sm:mb-6 space-y-2 sm:space-y-3">
             <a 
               href="https://rupak-s.netlify.app/" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-3 px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-md transition-all duration-200 group"
+              className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200 group panel-button px-3 py-2 rounded-md"
             >
-              <ExternalLink className="h-4 w-4 group-hover:text-indigo-400 transition-colors duration-200" />
-              <span className="font-medium">Portfolio</span>
+              <ExternalLink className="h-3.5 sm:h-4 w-3.5 sm:w-4 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-200" />
+              Portfolio
             </a>
             <a 
               href="https://drive.google.com/file/d/1yIF1cpF3Uz6M7-_TP0gn18bzplbX-_kf/view?usp=sharing" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-3 px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-md transition-all duration-200 group"
+              className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200 group panel-button px-3 py-2 rounded-md"
             >
-              <FileText className="h-4 w-4 group-hover:text-indigo-400 transition-colors duration-200" />
-              <span className="font-medium">Resume</span>
-            </a>
-          </motion.div>
-        ) : (
-          <div className="flex flex-col items-center gap-4 mb-6">
-            <a 
-              href="https://rupak-s.netlify.app/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-md transition-all duration-200"
-              title="Portfolio"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </a>
-            <a 
-              href="https://drive.google.com/file/d/1DkVjDSGFoqvA2bqGO2WXtNRJQnR6m89z/view" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-md transition-all duration-200"
-              title="Resume"
-            >
-              <FileText className="h-4 w-4" />
+              <FileText className="h-3.5 sm:h-4 w-3.5 sm:w-4 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-200" />
+              Resume
             </a>
           </div>
-        )}
 
-        {/* Avatar + Label */}
-        <div className="flex items-center">
-          <div className="w-9 h-9 rounded-full bg-indigo-600/40 flex items-center justify-center text-white font-bold shadow-sm">
-            V
-          </div>
-          
-          {!collapsed && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="ml-4 text-sm font-medium text-white"
-            >
+          {/* Avatar + Label */}
+          <div className="flex items-center px-3 py-2 panel-button rounded-md">
+            <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-indigo-600/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">
+              V
+            </div>
+            <div className="ml-3 sm:ml-4 text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
               Vigilant v1.0
-            </motion.div>
-          )}
+            </div>
+          </div>
         </div>
-      </div>
-    </motion.div>
+      )}
+    </div>
   );
 } 

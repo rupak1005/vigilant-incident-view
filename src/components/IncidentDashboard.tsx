@@ -44,6 +44,27 @@ const IncidentDashboard = () => {
       description: "Chatbot inadvertently exposed non-sensitive user metadata...", 
       severity: "Low", 
       reported_at: "2025-03-20T09:15:00Z" 
+    },
+    { 
+      id: 4, 
+      title: "Facial Recognition False Positive", 
+      description: "System incorrectly identified an individual in a security system...", 
+      severity: "Medium", 
+      reported_at: "2025-03-25T15:45:00Z" 
+    },
+    { 
+      id: 5, 
+      title: "AI-Generated Content Misattribution", 
+      description: "AI system published content with incorrect source attribution...", 
+      severity: "Low", 
+      reported_at: "2025-03-18T11:20:00Z" 
+    },
+    { 
+      id: 6, 
+      title: "Autonomous Vehicle Navigation Failure", 
+      description: "Self-driving system failed to recognize a construction zone...", 
+      severity: "High", 
+      reported_at: "2025-03-30T08:15:00Z" 
     }
   ];
 

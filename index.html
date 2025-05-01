@@ -11,11 +11,27 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/logo.svg" />
     <meta name="theme-color" content="#111827" />
+    <style>
+      .responsive-text {
+        font-size: clamp(1rem, 2vw, 1.5rem);
+      }
+    </style>
   </head>
 
   <body class="antialiased overflow-hidden">
-    <div id="root"></div>
+    <div id="root">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Content cards */}
+      </div>
+    </div>
     
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Load features based on device capabilities
+      const features = {
+        animations: window.matchMedia('(prefers-reduced-motion: no-preference)').matches,
+        touch: 'ontouchstart' in window
+      };
+    </script>
   </body>
 </html>
