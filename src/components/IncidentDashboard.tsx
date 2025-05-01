@@ -366,14 +366,14 @@ const IncidentDashboard = () => {
                   {filtered.map(incident => (
               <motion.div
                 key={incident.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
                       transition={{ 
-                        duration: 0.2,
+                        duration: 0.4,
                         type: "spring",
-                        stiffness: 500,
-                        damping: 30
+                        stiffness: 100,
+                        damping: 15
                       }}
                       layout="position"
                       layoutId={`incident-card-${incident.id}`}
@@ -383,11 +383,12 @@ const IncidentDashboard = () => {
                         backfaceVisibility: 'hidden'
                       }}
                     >
-                      <Card className="bg-card/50 backdrop-blur-xl border border-border/50 transition-all duration-300 ease-in-out hover:shadow-lg dark:hover:bg-gray-800/50 hover:border-primary/50">
+                      <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out hover:shadow-md dark:hover:bg-gray-800/90 hover:border-primary/30">
                         <motion.div 
                           className="flex flex-col sm:flex-row items-start gap-4 p-4"
-                layout
-              >
+                          layout
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                        >
                     <div className="pt-1">
                       <Checkbox
                               checked={selected.includes(incident.id)}
@@ -400,6 +401,7 @@ const IncidentDashboard = () => {
                             <motion.div 
                               className="flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                               layout
+                              transition={{ duration: 0.3, ease: "easeInOut" }}
                             >
                         <div>
                           <h3 className="text-base sm:text-lg font-semibold" 
@@ -427,13 +429,35 @@ const IncidentDashboard = () => {
                             />
                                   <motion.div whileTap={{ scale: 0.95 }}>
                             <Button 
-                              variant="outline" 
+                              variant={expanded.includes(incident.id) ? "secondary" : "outline"}
                               size="sm" 
                                       onClick={() => toggleExpand(incident.id)}
                                       aria-expanded={expanded.includes(incident.id)}
-                              className="h-8"
+                                      className="h-8 flex items-center gap-1.5"
                             >
-                                      {expanded.includes(incident.id) ? 'Hide Details' : 'View Details'}
+                              {expanded.includes(incident.id) ? (
+                                <>
+                                  <motion.span 
+                                    initial={{ rotate: 0 }} 
+                                    animate={{ rotate: 180 }}
+                                    className="h-4 w-4"
+                                  >
+                                    ↑
+                                  </motion.span>
+                                  Hide Details
+                                </>
+                              ) : (
+                                <>
+                                  <motion.span 
+                                    initial={{ rotate: 180 }} 
+                                    animate={{ rotate: 0 }}
+                                    className="h-4 w-4"
+                                  >
+                                    ↑
+                                  </motion.span>
+                                  View Details
+                                </>
+                              )}
                             </Button>
                                   </motion.div>
                           </div>
@@ -443,49 +467,64 @@ const IncidentDashboard = () => {
                             <AnimatePresence mode="wait" initial={false}>
                               {expanded.includes(incident.id) && (
                           <motion.div
-                                  initial={{ height: 0, opacity: 0, scale: 0.98 }}
+                                  initial={{ height: 0, opacity: 0, y: -20 }}
                             animate={{ 
                               height: "auto", 
                               opacity: 1,
-                                    scale: 1,
+                              y: 0,
                               transition: {
                                       type: "spring",
-                                      stiffness: 400,
-                                      damping: 40,
-                                      opacity: { duration: 0.15 }
+                                      stiffness: 300,
+                                      damping: 25,
+                                      mass: 0.5,
+                                      opacity: { duration: 0.2, delay: 0.1 }
                               }
                             }}
                             exit={{ 
                               height: 0, 
                               opacity: 0,
-                                    scale: 0.98,
+                              y: -10,
                               transition: {
-                                      type: "spring",
-                                      stiffness: 400,
-                                      damping: 40,
-                                      opacity: { duration: 0.10 }
+                                      duration: 0.3,
+                                      ease: [0.4, 0, 0.2, 1],
+                                      opacity: { duration: 0.15 }
                                     }
                                   }}
-                                  className="mt-4 px-4 py-3 bg-background/50 backdrop-blur-sm rounded-md overflow-hidden will-change-transform"
+                                  className="mt-4 px-5 py-4 bg-slate-50 dark:bg-slate-800/60 backdrop-blur-sm rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm"
                                   layout
                                   style={{
                                     willChange: 'transform, opacity, height',
-                                    transformOrigin: 'top'
+                                    transformOrigin: 'top center'
                                   }}
                                 >
-                                  <motion.p 
-                                    initial={{ opacity: 0, y: 5 }}
+                                  <motion.div
+                                    className="space-y-3"
+                                    initial={{ opacity: 0, y: 10 }}
                                     animate={{ 
                                       opacity: 1, 
                                       y: 0,
-                                      transition: { delay: 0.05 }
+                                      transition: { 
+                                        delay: 0.1,
+                                        duration: 0.3,
+                                        ease: "easeOut"
+                                      }
                                     }}
-                                    exit={{ opacity: 0 }}
-                              className="text-foreground"
-                              dangerouslySetInnerHTML={{ 
-                                      __html: highlight(incident.description, searchQuery) 
-                              }}
-                            />
+                                    exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                                  >
+                                    <motion.h4 
+                                      className="text-sm font-medium text-slate-500 dark:text-slate-400"
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1, transition: { delay: 0.15 } }}
+                                    >
+                                      Incident Details
+                                    </motion.h4>
+                                    <motion.p 
+                                      className="text-foreground"
+                                      dangerouslySetInnerHTML={{ 
+                                        __html: highlight(incident.description, searchQuery) 
+                                      }}
+                                    />
+                                  </motion.div>
                           </motion.div>
                         )}
                       </AnimatePresence>
