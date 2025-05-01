@@ -38,7 +38,7 @@ const IncidentSearch: React.FC<IncidentSearchProps> = ({ onSearch, query }) => {
             placeholder="Search incidents by title or description..."
             value={localQuery}
             onChange={(e) => setLocalQuery(e.target.value)}
-            className="pl-10 pr-16 w-full" // Extra padding for the search icon and clear button
+            className="pl-10 pr-10 w-full" // Adjusted padding for the search icon and clear button
           />
           {localQuery && (
             <Button
@@ -46,7 +46,7 @@ const IncidentSearch: React.FC<IncidentSearchProps> = ({ onSearch, query }) => {
               variant="ghost"
               size="sm"
               onClick={clearSearch}
-              className="absolute right-14 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
             >
               <X className="h-4 w-4" />
               <span className="sr-only">Clear search</span>
