@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
-interface DateRangeFilterProps {
+// Props for the date filter component
+type DateFilterProps = {
   startDate: string;
   endDate: string;
   onStartDateChange: (date: string) => void;
@@ -12,15 +13,32 @@ interface DateRangeFilterProps {
   onClearDates: () => void;
 }
 
-const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
-  startDate,
-  endDate,
-  onStartDateChange,
-  onEndDateChange,
-  onClearDates
-}) => {
+// Simple date range picker component
+export default function DateRangeFilter(props: DateFilterProps) {
+  // Extract props for cleaner JSX below
+  const { 
+    startDate, 
+    endDate, 
+    onStartDateChange, 
+    onEndDateChange, 
+    onClearDates 
+  } = props;
+  
+  // Helper to clear a specific date
+  const clearDate = (which: 'start' | 'end') => {
+    if (which === 'start') {
+      onStartDateChange('');
+    } else {
+      onEndDateChange('');
+    }
+  };
+
+  // For debugging
+  // console.log('DateRangeFilter render', { startDate, endDate });
+
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      {/* Start date field */}
       <div className="flex-1">
         <Label htmlFor="start-date" className="block text-sm font-medium mb-1">From Date</Label>
         <div className="relative">
@@ -28,7 +46,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
             id="start-date"
             type="date"
             value={startDate}
-            onChange={(e) => onStartDateChange(e.target.value)}
+            onChange={e => onStartDateChange(e.target.value)}
             className="w-full"
             max={endDate || undefined}
           />
@@ -37,7 +55,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => onStartDateChange('')}
+              onClick={() => clearDate('start')}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
               aria-label="Clear start date"
             >
@@ -47,6 +65,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
         </div>
       </div>
       
+      {/* End date field */}
       <div className="flex-1">
         <Label htmlFor="end-date" className="block text-sm font-medium mb-1">To Date</Label>
         <div className="relative">
@@ -63,7 +82,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => onEndDateChange('')}
+              onClick={() => clearDate('end')}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
               aria-label="Clear end date"
             >
@@ -73,7 +92,8 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
         </div>
       </div>
       
-      {(startDate || endDate) && (
+      {/* Only show clear button when dates are selected */}
+      {(!!startDate || !!endDate) && (
         <div className="flex items-end">
           <Button
             type="button"
@@ -87,6 +107,4 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
       )}
     </div>
   );
-};
-
-export default DateRangeFilter;
+}

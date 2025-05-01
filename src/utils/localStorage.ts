@@ -1,20 +1,49 @@
+// Local storage persistence
+// This is a bit hacky but works for now - we should use a proper DB eventually!
 
-const STORAGE_KEY = 'incidents_data';
+// Key used in localStorage 
+const KEY = 'incidents_data_v1'; // v1 = added severity field
 
-export const saveIncidentsToStorage = (incidents: any[]) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(incidents));
-  } catch (error) {
-    console.error('Error saving to localStorage:', error);
+/**
+ * Save incidents data to localStorage
+ */
+export function saveIncidentsToStorage(data: any[]) {
+  if (!data || !Array.isArray(data)) {
+    console.warn('Invalid data passed to saveIncidentsToStorage');
+    return;
   }
-};
-
-export const loadIncidentsFromStorage = (): any[] => {
+  
+  // Stringify and save
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    console.error('Error loading from localStorage:', error);
+    const json = JSON.stringify(data);
+    localStorage.setItem(KEY, json);
+    // console.log(`Saved ${data.length} incidents to localStorage`);
+  } catch (e) {
+    // This can happen if storage is full or in incognito mode
+    console.error('Failed to save to localStorage:', e);
+  }
+}
+
+// Load data from localStorage
+export const loadIncidentsFromStorage = () => {
+  try {
+    // Get from storage
+    const json = localStorage.getItem(KEY);
+    
+    // Handle no data
+    if (!json) return [];
+    
+    // Parse and validate
+    const parsed = JSON.parse(json);
+    if (!Array.isArray(parsed)) {
+      console.warn('Invalid format in localStorage - expected array');
+      return [];
+    }
+    
+    return parsed;
+  } catch (err) {
+    // Something went wrong, start fresh
+    console.error('Error loading data:', err);
     return [];
   }
 };

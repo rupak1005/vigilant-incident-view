@@ -5,23 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, CheckSquare } from "lucide-react";
+import { AlertCircle, CheckSquare, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Toaster } from "@/components/ui/toaster";
 import { toast } from "@/components/ui/sonner";
-import ThemeToggle from "@/components/ThemeToggle";
 import IncidentCharts from "@/components/IncidentCharts";
-import IncidentSearch from "@/components/IncidentSearch";
-import DateRangeFilter from "@/components/DateRangeFilter";
-import MultiSeverityFilter from "@/components/MultiSeverityFilter";
 import IncidentEditDialog from "@/components/IncidentEditDialog";
 import IncidentDeleteDialog from "@/components/IncidentDeleteDialog";
 import { exportToCSV } from '../utils/csvExport';
 import { saveIncidentsToStorage, loadIncidentsFromStorage } from '../utils/localStorage';
-import AISummary from './AISummary';
-import { FileText } from 'lucide-react';
+import DashboardLayout from './DashboardLayout';
 
+// TODO: Move this to types file later
 interface Incident {
   id: number;
   title: string;
@@ -30,8 +25,9 @@ interface Incident {
   reported_at: string; // ISO timestamp
 }
 
-const IncidentDashboard: React.FC = () => {
-  const initialIncidents: Incident[] = [
+const IncidentDashboard = () => {
+  // Some starter data for demo purposes
+  const sampleIncidents: Incident[] = [
     { 
       id: 1, 
       title: "Biased Recommendation Algorithm", 
@@ -55,45 +51,53 @@ const IncidentDashboard: React.FC = () => {
     }
   ];
 
-  const [incidents, setIncidents] = useState<Incident[]>(initialIncidents);
-  const [expandedIds, setExpandedIds] = useState<number[]>([]);
-  const [selectedSeverities, setSelectedSeverities] = useState<string[]>([]);
-  const [sortOrder, setSortOrder] = useState<string>("newest");
+  const [incidents, setIncidents] = useState<Incident[]>(sampleIncidents);
+  const [expanded, setExpanded] = useState<number[]>([]);
+  const [activeSeverities, setActiveSeverities] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<string>("newest");
   
-  const [newIncident, setNewIncident] = useState<Omit<Incident, 'id' | 'reported_at'>>({
+  // For adding new incidents
+  const [newInc, setNewInc] = useState<Omit<Incident, 'id' | 'reported_at'>>({
     title: '',
     description: '',
     severity: 'Low',
   });
-  const [formError, setFormError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
+  // Search and filtering
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [selectedIncidents, setSelectedIncidents] = useState<number[]>([]);
+  const [selected, setSelected] = useState<number[]>([]);
 
+  // UI state
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  // Load saved incidents once on startup
   useEffect(() => {
-    const savedIncidents = loadIncidentsFromStorage();
-    if (savedIncidents.length > 0) {
-      setIncidents(savedIncidents);
+    const saved = loadIncidentsFromStorage();
+    if (saved && saved.length > 0) {
+      setIncidents(saved);
     }
   }, []);
 
+  // Show toast for high severity incidents
   useEffect(() => {
-    const highSeverityIncidents = incidents.filter(
-      incident => incident.severity === "High"
-    );
+    const highSevs = incidents.filter(inc => inc.severity === "High");
     
-    if (highSeverityIncidents.length > 0) {
-      const latestHighSeverity = highSeverityIncidents.reduce((latest, current) => 
-        new Date(current.reported_at) > new Date(latest.reported_at) ? current : latest
-      );
+    if (highSevs.length > 0) {
+      let newest = highSevs[0];
+      for (let i = 1; i < highSevs.length; i++) {
+        if (new Date(highSevs[i].reported_at) > new Date(newest.reported_at)) {
+          newest = highSevs[i];
+        }
+      }
       
-      const isRecent = (Date.now() - new Date(latestHighSeverity.reported_at).getTime()) < 60000;
+      const isNew = (Date.now() - new Date(newest.reported_at).getTime()) < 60000;
       
-      if (isRecent) {
+      if (isNew) {
         toast.warning(
-          `High Severity Alert: ${latestHighSeverity.title}`, 
+          `High Severity Alert: ${newest.title}`, 
           { 
             duration: 5000,
             important: true,
@@ -103,98 +107,119 @@ const IncidentDashboard: React.FC = () => {
     }
   }, [incidents]);
 
+  // Save to localStorage whenever incidents change
   useEffect(() => {
     saveIncidentsToStorage(incidents);
   }, [incidents]);
 
-  const toggleDetails = (id: number) => {
-    setExpandedIds(prev => 
-      prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
-    );
-  };
-
-  const toggleSelectIncident = (id: number) => {
-    setSelectedIncidents(prev => 
-      prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIncidents.length === filteredAndSortedIncidents.length) {
-      setSelectedIncidents([]);
+  // Toggle expanded details view
+  const toggleExpand = (id: number) => {
+    if (expanded.includes(id)) {
+      setExpanded(expanded.filter(i => i !== id));
     } else {
-      setSelectedIncidents(filteredAndSortedIncidents.map(inc => inc.id));
+      setExpanded([...expanded, id]);
     }
   };
 
-  const filteredAndSortedIncidents = incidents
-    .filter(incident => {
-      const severityMatch = selectedSeverities.length === 0 || 
-                            selectedSeverities.includes(incident.severity);
+  // Toggle incident selection for bulk actions
+  const toggleSelect = (id: number) => {
+    if (selected.includes(id)) {
+      setSelected(selected.filter(i => i !== id));
+    } else {
+      setSelected([...selected, id]);
+    }
+  };
+
+  const toggleAll = () => {
+    if (selected.length === filtered.length) {
+      setSelected([]);
+    } else {
+      setSelected(filtered.map(inc => inc.id));
+    }
+  };
+
+  // Apply all filters and sort
+  const filtered = incidents
+    .filter(inc => {
+      // Severity filter
+      const sevMatch = activeSeverities.length === 0 || 
+                        activeSeverities.includes(inc.severity);
       
-      const searchMatch = !searchQuery || 
-                          incident.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          incident.description.toLowerCase().includes(searchQuery.toLowerCase());
+      // Text search
+      const textMatch = !searchQuery || 
+                        inc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        inc.description.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const incidentDate = new Date(incident.reported_at);
-      const startDateObj = startDate ? new Date(startDate) : null;
-      const endDateObj = endDate ? new Date(endDate) : null;
+      // Date range filter
+      const incDate = new Date(inc.reported_at);
+      const start = startDate ? new Date(startDate) : null;
+      const end = endDate ? new Date(endDate) : null;
       
-      if (startDateObj) startDateObj.setHours(0, 0, 0, 0);
-      if (endDateObj) endDateObj.setHours(23, 59, 59, 999);
+      if (start) start.setHours(0, 0, 0, 0);
+      if (end) end.setHours(23, 59, 59, 999);
       
-      const dateMatch = (!startDateObj || incidentDate >= startDateObj) &&
-                        (!endDateObj || incidentDate <= endDateObj);
+      const dateMatch = (!start || incDate >= start) &&
+                        (!end || incDate <= end);
       
-      return severityMatch && searchMatch && dateMatch;
+      return sevMatch && textMatch && dateMatch;
     })
     .sort((a, b) => {
       const dateA = new Date(a.reported_at).getTime();
       const dateB = new Date(b.reported_at).getTime();
-      return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+      return sortBy === "newest" ? dateB - dateA : dateA - dateB;
     });
 
+  // Submit new incident
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newIncident.title.trim() || !newIncident.description.trim()) {
-      setFormError("Title and description are required.");
+    if (!newInc.title.trim() || !newInc.description.trim()) {
+      setError("Title and description are required.");
       return;
     }
     
-    const newIncidentWithIdAndDate = {
-      ...newIncident,
-      id: Math.max(0, ...incidents.map(inc => inc.id)) + 1,
+    // Find next ID
+    let nextId = 1;
+    if (incidents.length > 0) {
+      nextId = Math.max(...incidents.map(i => i.id)) + 1;
+    }
+    
+    const incToAdd = {
+      ...newInc,
+      id: nextId,
       reported_at: new Date().toISOString(),
     };
     
-    setIncidents([newIncidentWithIdAndDate, ...incidents]);
-    setNewIncident({
+    setIncidents([incToAdd, ...incidents]);
+    setNewInc({
       title: '',
       description: '',
       severity: 'Low',
     });
-    setFormError(null);
+    setError(null);
+    setShowAddForm(false);
     
-    toast.success("New incident reported successfully");
+    toast.success("Incident reported!");
   };
 
-  const handleInputChange = (
+  // Form input handlers
+  const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setNewIncident(prev => ({ ...prev, [name]: value }));
+    setNewInc({...newInc, [name]: value});
   };
 
-  const handleSeverityChange = (value: string) => {
-    setNewIncident(prev => ({ 
-      ...prev, 
+  const setSeverity = (value: string) => {
+    setNewInc({
+      ...newInc, 
       severity: value as 'Low' | 'Medium' | 'High' 
-    }));
+    });
   };
 
-  const getSeverityBadgeClass = (severity: string) => {
-    switch (severity) {
+  // Get CSS class for severity badge
+  const getSevBadgeStyle = (sev: string) => {
+    switch (sev) {
       case 'Low':
         return 'bg-blue-200 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'Medium':
@@ -206,342 +231,351 @@ const IncidentDashboard: React.FC = () => {
     }
   };
   
-  const handleUpdateIncident = (updatedIncident: Incident) => {
-    setIncidents(prev => prev.map(inc => 
-      inc.id === updatedIncident.id ? updatedIncident : inc
+  // Update an existing incident
+  const updateIncident = (updated: Incident) => {
+    setIncidents(incidents.map(inc => 
+      inc.id === updated.id ? updated : inc
     ));
   };
   
-  const handleDeleteIncident = (id: number) => {
-    setIncidents(prev => prev.filter(inc => inc.id !== id));
-    setSelectedIncidents(prev => prev.filter(selectedId => selectedId !== id));
+  // Delete a single incident
+  const deleteIncident = (id: number) => {
+    setIncidents(incidents.filter(inc => inc.id !== id));
+    setSelected(selected.filter(selId => selId !== id));
   };
   
-  const handleBulkDelete = () => {
-    if (selectedIncidents.length === 0) return;
+  // Delete multiple selected incidents
+  const bulkDelete = () => {
+    if (selected.length === 0) return;
     
-    setIncidents(prev => prev.filter(inc => !selectedIncidents.includes(inc.id)));
-    setSelectedIncidents([]);
+    setIncidents(incidents.filter(inc => !selected.includes(inc.id)));
+    setSelected([]);
     
-    toast.success(`${selectedIncidents.length} incident${selectedIncidents.length > 1 ? 's' : ''} deleted`);
+    toast.success(`Deleted ${selected.length} incident${selected.length > 1 ? 's' : ''}`);
   };
   
-  const clearAllFilters = () => {
-    setSelectedSeverities([]);
+  // Reset all filters
+  const resetFilters = () => {
+    setActiveSeverities([]);
     setSearchQuery('');
     setStartDate('');
     setEndDate('');
-    setSortOrder("newest");
+    setSortBy("newest");
   };
 
-  const highlightText = (text: string, query: string) => {
+  // Text highlighting for search results
+  const highlight = (text: string, query: string) => {
     if (!query.trim()) return text;
     
     const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     return text.replace(regex, '<mark className="bg-yellow-200 dark:bg-yellow-900">$1</mark>');
   };
 
-  return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-4xl">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
-        <motion.h1 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-2xl sm:text-3xl font-bold text-center sm:text-left"
-        >
-          Incident Dashboard
-        </motion.h1>
-        <div className="flex flex-wrap gap-2 sm:gap-4 items-center w-full sm:w-auto">
-          <Button
-            variant="outline"
-            onClick={() => exportToCSV(filteredAndSortedIncidents)}
-            className="flex items-center gap-2 w-full sm:w-auto justify-center"
-          >
-            <FileText className="h-4 w-4" />
-            Export CSV
-          </Button>
-          <AISummary incidents={incidents} />
-          <ThemeToggle />
-        </div>
-      </div>
-      
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6 bg-card/50 backdrop-blur-xl border border-border/50 p-4 sm:p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
-      >
-        <h2 className="text-lg sm:text-xl font-semibold mb-4">Report New Incident</h2>
-        
-        {formError && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{formError}</AlertDescription>
-          </Alert>
-        )}
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium mb-1">
-              Title
-            </label>
-            <Input
-              id="title"
-              name="title"
-              value={newIncident.title}
-              onChange={handleInputChange}
-              placeholder="Brief incident title"
-              className="w-full"
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium mb-1">
-              Description
-            </label>
-            <Textarea
-              id="description"
-              name="description"
-              value={newIncident.description}
-              onChange={handleInputChange}
-              placeholder="Detailed incident description"
-              className="w-full"
-              rows={3}
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="severity" className="block text-sm font-medium mb-1">
-              Severity
-            </label>
-            <Select 
-              value={newIncident.severity} 
-              onValueChange={handleSeverityChange}
-            >
-              <SelectTrigger id="severity" className="w-full">
-                <SelectValue placeholder="Select severity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Low">Low</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="High">High</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <Button type="submit" className="w-full">
-            Submit Incident
-          </Button>
-        </form>
-      </motion.div>
+  // Check if reset filters is disabled
+  const isResetFiltersDisabled = !searchQuery && !startDate && !endDate && activeSeverities.length === 0 && sortBy === "newest";
 
-      <IncidentCharts incidents={incidents} />
-      
-      <div className="mb-6 bg-card/50 backdrop-blur-xl border border-border/50 p-4 sm:p-6 rounded-lg shadow-lg">
-        <h2 className="text-lg sm:text-xl font-semibold mb-4">Search & Filter</h2>
-        
-        <IncidentSearch query={searchQuery} onSearch={setSearchQuery} />
-        
-        <DateRangeFilter
-          startDate={startDate}
-          endDate={endDate}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
-          onClearDates={() => {
-            setStartDate('');
-            setEndDate('');
-          }}
-        />
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4">
-          <MultiSeverityFilter
-            selectedSeverities={selectedSeverities}
-            onChange={setSelectedSeverities}
-          />
-          
-          <div>
-            <label htmlFor="sort" className="block text-sm font-medium mb-1">
-              Sort by Date
-            </label>
-            <Select value={sortOrder} onValueChange={setSortOrder}>
-              <SelectTrigger id="sort" className="w-full">
-                <SelectValue placeholder="Sort by date" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <div className="flex flex-wrap justify-between items-center mt-4 gap-4">
-          <div className="text-sm text-gray-500">
-            Showing {filteredAndSortedIncidents.length} of {incidents.length} incidents
-          </div>
-          
-          <Button
-            variant="outline"
-            onClick={clearAllFilters}
-            disabled={!searchQuery && !startDate && !endDate && selectedSeverities.length === 0 && sortOrder === "newest"}
-          >
-            Clear All Filters
-          </Button>
-        </div>
-      </div>
-      
-      {selectedIncidents.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-md"
-        >
-          <div className="flex items-center gap-2">
-            <CheckSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <span className="font-medium">
-              {selectedIncidents.length} incident{selectedIncidents.length > 1 ? 's' : ''} selected
+  return (
+    <DashboardLayout
+      title="Incident Dashboard"
+      searchQuery={searchQuery}
+      onSearch={setSearchQuery}
+      startDate={startDate}
+      endDate={endDate}
+      onStartDateChange={setStartDate}
+      onEndDateChange={setEndDate}
+      selectedSeverities={activeSeverities}
+      onSeverityChange={setActiveSeverities}
+      sortOrder={sortBy}
+      onSortOrderChange={setSortBy}
+      onResetFilters={resetFilters}
+      isResetDisabled={isResetFiltersDisabled}
+      onAddClick={() => setShowAddForm(true)}
+      onExportClick={() => exportToCSV(filtered)}
+      incidents={incidents}
+    >
+      {/* Metrics section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <Card className="bg-card/80 p-4">
+          <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Total Incidents</div>
+          <div className="text-2xl font-bold">{incidents.length}</div>
+          <div className="text-xs mt-2 text-green-600">
+            <span className="flex items-center">
+              <RefreshCw className="h-3 w-3 mr-1" /> Last updated: {new Date().toLocaleTimeString()}
             </span>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSelectedIncidents([])}
-            >
-              Deselect All
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleBulkDelete}
-            >
-              Delete Selected
-            </Button>
+        </Card>
+        
+        <Card className="bg-card/80 p-4">
+          <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">High Severity</div>
+          <div className="text-2xl font-bold">{incidents.filter(i => i.severity === 'High').length}</div>
+          <div className="text-xs mt-2 text-red-600">
+            <span className="flex items-center">
+              <RefreshCw className="h-3 w-3 mr-1" /> Last updated: {new Date().toLocaleTimeString()}
+            </span>
           </div>
-        </motion.div>
-      )}
-      
-      <div className="flex flex-col sm:flex-row items-center gap-2 mb-4">
-        <Checkbox
-          id="select-all"
-          checked={selectedIncidents.length === filteredAndSortedIncidents.length && filteredAndSortedIncidents.length > 0}
-          onCheckedChange={toggleSelectAll}
-          aria-label="Select all incidents"
-        />
-        <label htmlFor="select-all" className="text-sm cursor-pointer">
-          Select All
-        </label>
+        </Card>
+        
+        <Card className="bg-card/80 p-4">
+          <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Medium Severity</div>
+          <div className="text-2xl font-bold">{incidents.filter(i => i.severity === 'Medium').length}</div>
+          <div className="text-xs mt-2 text-yellow-600">
+            <span className="flex items-center">
+              <RefreshCw className="h-3 w-3 mr-1" /> Last updated: {new Date().toLocaleTimeString()}
+            </span>
+          </div>
+        </Card>
+        
+        <Card className="bg-card/80 p-4">
+          <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Low Severity</div>
+          <div className="text-2xl font-bold">{incidents.filter(i => i.severity === 'Low').length}</div>
+          <div className="text-xs mt-2 text-blue-600">
+            <span className="flex items-center">
+              <RefreshCw className="h-3 w-3 mr-1" /> Last updated: {new Date().toLocaleTimeString()}
+            </span>
+          </div>
+        </Card>
       </div>
       
+      {/* Charts section */}
+      <IncidentCharts incidents={incidents} />
+      
+      {/* New incident form */}
       <AnimatePresence>
-        <div className="space-y-4">
-          {filteredAndSortedIncidents.length === 0 ? (
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center text-gray-500 py-8"
-            >
-              No incidents match your criteria.
-            </motion.p>
-          ) : (
-            filteredAndSortedIncidents.map(incident => (
-              <motion.div
-                key={incident.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                layout
+        {showAddForm && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="mb-6 overflow-hidden"
+          >
+            <Card className="bg-card/50 backdrop-blur-xl border border-border/50 p-4 sm:p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Report New Incident</h2>
+                <Button variant="ghost" size="sm" onClick={() => setShowAddForm(false)}>
+                  <AlertCircle className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {error && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="title" className="block text-sm font-medium mb-1">Title</label>
+                  <Input
+                    id="title"
+                    name="title"
+                    value={newInc.title}
+                    onChange={handleChange}
+                    placeholder="Brief incident title"
+                    className="w-full"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="description" className="block text-sm font-medium mb-1">Description</label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    value={newInc.description}
+                    onChange={handleChange}
+                    placeholder="Detailed incident description"
+                    className="w-full"
+                    rows={3}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="severity" className="block text-sm font-medium mb-1">Severity</label>
+                  <Select 
+                    value={newInc.severity} 
+                    onValueChange={setSeverity}
+                  >
+                    <SelectTrigger id="severity" className="w-full">
+                      <SelectValue placeholder="Select severity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <Button type="submit" className="w-full">Submit Incident</Button>
+              </form>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Incident list */}
+      <div className="mt-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Incidents</h2>
+          <div className="text-sm text-gray-500">
+            Showing {filtered.length} of {incidents.length} incidents
+          </div>
+        </div>
+        
+        {selected.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-md"
+          >
+            <div className="flex items-center gap-2">
+              <CheckSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <span className="font-medium">
+                {selected.length} incident{selected.length > 1 ? 's' : ''} selected
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelected([])}
               >
-                <Card className="bg-card/50 backdrop-blur-xl border border-border/50 transition-all duration-300 ease-in-out hover:shadow-lg dark:hover:bg-gray-800/50 hover:border-primary/50">
-                  <div className="flex flex-col sm:flex-row items-start gap-4 p-4">
-                    <div className="pt-1">
-                      <Checkbox
-                        checked={selectedIncidents.includes(incident.id)}
-                        onCheckedChange={() => toggleSelectIncident(incident.id)}
-                        aria-label={`Select incident ${incident.title}`}
-                      />
-                    </div>
-                    
-                    <div className="flex-1 w-full">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div>
-                          <h3 className="text-base sm:text-lg font-semibold" 
-                              dangerouslySetInnerHTML={{ 
-                                __html: highlightText(incident.title, searchQuery) 
-                              }} 
-                          />
-                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                            {new Date(incident.reported_at).toLocaleString()}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getSeverityBadgeClass(incident.severity)}`}>
-                            {incident.severity}
-                          </span>
-                          <div className="flex gap-2">
-                            <IncidentEditDialog 
-                              incident={incident}
-                              onSave={handleUpdateIncident}
-                            />
-                            <IncidentDeleteDialog
-                              incidentId={incident.id}
-                              incidentTitle={incident.title}
-                              onDelete={handleDeleteIncident}
-                            />
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => toggleDetails(incident.id)}
-                              aria-expanded={expandedIds.includes(incident.id)}
-                              className="h-8"
-                            >
-                              {expandedIds.includes(incident.id) ? 'Hide Details' : 'View Details'}
-                            </Button>
-                          </div>
-                        </div>
+                Deselect All
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={bulkDelete}
+              >
+                Delete Selected
+              </Button>
+            </div>
+          </motion.div>
+        )}
+        
+        <div className="flex items-center gap-2 mb-4">
+          <Checkbox
+            id="select-all"
+            checked={selected.length === filtered.length && filtered.length > 0}
+            onCheckedChange={toggleAll}
+            aria-label="Select all incidents"
+          />
+          <label htmlFor="select-all" className="text-sm cursor-pointer">
+            Select All
+          </label>
+        </div>
+        
+        <AnimatePresence>
+          <div className="space-y-4">
+            {filtered.length === 0 ? (
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center text-gray-500 py-8"
+              >
+                No incidents match your criteria.
+              </motion.p>
+            ) : (
+              filtered.map(incident => (
+                <motion.div
+                  key={incident.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  layout
+                >
+                  <Card className="bg-card/50 backdrop-blur-xl border border-border/50 transition-all duration-300 ease-in-out hover:shadow-lg dark:hover:bg-gray-800/50 hover:border-primary/50">
+                    <div className="flex flex-col sm:flex-row items-start gap-4 p-4">
+                      <div className="pt-1">
+                        <Checkbox
+                          checked={selected.includes(incident.id)}
+                          onCheckedChange={() => toggleSelect(incident.id)}
+                          aria-label={`Select incident ${incident.title}`}
+                        />
                       </div>
                       
-                      <AnimatePresence mode="wait">
-                        {expandedIds.includes(incident.id) && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ 
-                              height: "auto", 
-                              opacity: 1,
-                              transition: {
-                                height: { duration: 0.3, ease: "easeOut" },
-                                opacity: { duration: 0.2, delay: 0.1 }
-                              }
-                            }}
-                            exit={{ 
-                              height: 0, 
-                              opacity: 0,
-                              transition: {
-                                height: { duration: 0.3, ease: "easeIn" },
-                                opacity: { duration: 0.2 }
-                              }
-                            }}
-                            className="mt-4 px-4 py-3 bg-background/50 backdrop-blur-sm rounded-md overflow-hidden"
-                          >
-                            <p 
-                              className="text-foreground"
-                              dangerouslySetInnerHTML={{ 
-                                __html: highlightText(incident.description, searchQuery) 
-                              }}
+                      <div className="flex-1 w-full">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <h3 className="text-base sm:text-lg font-semibold" 
+                                dangerouslySetInnerHTML={{ 
+                                  __html: highlight(incident.title, searchQuery) 
+                                }} 
                             />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                              {new Date(incident.reported_at).toLocaleString()}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getSevBadgeStyle(incident.severity)}`}>
+                              {incident.severity}
+                            </span>
+                            <div className="flex gap-2">
+                              <IncidentEditDialog 
+                                incident={incident}
+                                onSave={updateIncident}
+                              />
+                              <IncidentDeleteDialog
+                                incidentId={incident.id}
+                                incidentTitle={incident.title}
+                                onDelete={deleteIncident}
+                              />
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => toggleExpand(incident.id)}
+                                aria-expanded={expanded.includes(incident.id)}
+                                className="h-8"
+                              >
+                                {expanded.includes(incident.id) ? 'Hide Details' : 'View Details'}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <AnimatePresence mode="wait">
+                          {expanded.includes(incident.id) && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ 
+                                height: "auto", 
+                                opacity: 1,
+                                transition: {
+                                  height: { duration: 0.3, ease: "easeOut" },
+                                  opacity: { duration: 0.2, delay: 0.1 }
+                                }
+                              }}
+                              exit={{ 
+                                height: 0, 
+                                opacity: 0,
+                                transition: {
+                                  height: { duration: 0.3, ease: "easeIn" },
+                                  opacity: { duration: 0.2 }
+                                }
+                              }}
+                              className="mt-4 px-4 py-3 bg-background/50 backdrop-blur-sm rounded-md overflow-hidden"
+                            >
+                              <p 
+                                className="text-foreground"
+                                dangerouslySetInnerHTML={{ 
+                                  __html: highlight(incident.description, searchQuery) 
+                                }}
+                              />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))
-          )}
-        </div>
-      </AnimatePresence>
-    </div>
+                  </Card>
+                </motion.div>
+              ))
+            )}
+          </div>
+        </AnimatePresence>
+      </div>
+    </DashboardLayout>
   );
 };
 

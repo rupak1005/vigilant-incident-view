@@ -1,38 +1,49 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sparkles } from "lucide-react";
 
+// quick & dirty incident type - TODO: reuse the real type from somewhere
 interface AISummaryProps {
-  incidents: any[];
+  incidents: any[]; // fix this type later
 }
 
-const AISummary: React.FC<AISummaryProps> = ({ incidents }) => {
+// This generates a fake summary for now
+// Eventually hook up to OpenAI API
+function AISummary({ incidents }: AISummaryProps) {
   const [open, setOpen] = useState(false);
   const [summary, setSummary] = useState('');
 
-  const generateSummary = () => {
-    // Mock AI summary generation
+  // FIXME: replace with real API call when ready
+  function makeSummary() {
+    // Just a basic summary for now
     const total = incidents.length;
-    const highSeverity = incidents.filter(i => i.severity === 'High').length;
-    const recentIncidents = incidents.filter(i => 
-      new Date(i.reported_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const criticalCount = incidents.filter(i => i.severity === 'High').length;
+    
+    // Count incidents from last week
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    const recentCount = incidents.filter(i => 
+      new Date(i.reported_at) > lastWeek
     ).length;
 
-    setSummary(
-      `Analysis of ${total} incidents:\n` +
-      `- ${highSeverity} high severity incidents identified\n` +
-      `- ${recentIncidents} incidents reported in the last 7 days\n` +
-      `Key trends: ${highSeverity > total/3 ? 'High' : 'Normal'} alert level`
-    );
+    // Generate summary text
+    let summaryText = `Analysis of ${total} incidents:\n`;
+    summaryText += `- ${criticalCount} high severity incidents found\n`;
+    summaryText += `- ${recentCount} incidents from last 7 days\n`;
+    
+    // Simple alert level logic
+    const alertLevel = criticalCount > total/3 ? 'High' : 'Normal';
+    summaryText += `Alert level: ${alertLevel}`;
+
+    setSummary(summaryText);
     setOpen(true);
   };
 
   return (
     <>
       <Button 
-        onClick={generateSummary}
+        onClick={makeSummary}
         className="flex items-center gap-2"
         variant="outline"
       >
