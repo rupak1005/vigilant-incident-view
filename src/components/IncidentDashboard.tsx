@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -477,100 +477,139 @@ const IncidentDashboard = () => {
                 No incidents match your criteria.
               </motion.p>
             ) : (
-              filtered.map(incident => (
-                <motion.div
-                  key={incident.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  layout
-                >
-                  <Card className="bg-card/50 backdrop-blur-xl border border-border/50 transition-all duration-300 ease-in-out hover:shadow-lg dark:hover:bg-gray-800/50 hover:border-primary/50">
-                    <div className="flex flex-col sm:flex-row items-start gap-4 p-4">
-                      <div className="pt-1">
-                        <Checkbox
-                          checked={selected.includes(incident.id)}
-                          onCheckedChange={() => toggleSelect(incident.id)}
-                          aria-label={`Select incident ${incident.title}`}
-                        />
-                      </div>
-                      
-                      <div className="flex-1 w-full">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                          <div>
-                            <h3 className="text-base sm:text-lg font-semibold" 
-                                dangerouslySetInnerHTML={{ 
-                                  __html: highlight(incident.title, searchQuery) 
-                                }} 
-                            />
-                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                              {new Date(incident.reported_at).toLocaleString()}
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
-                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getSevBadgeStyle(incident.severity)}`}>
-                              {incident.severity}
-                            </span>
-                            <div className="flex gap-2">
-                              <IncidentEditDialog 
-                                incident={incident}
-                                onSave={updateIncident}
-                              />
-                              <IncidentDeleteDialog
-                                incidentId={incident.id}
-                                incidentTitle={incident.title}
-                                onDelete={deleteIncident}
-                              />
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => toggleExpand(incident.id)}
-                                aria-expanded={expanded.includes(incident.id)}
-                                className="h-8"
-                              >
-                                {expanded.includes(incident.id) ? 'Hide Details' : 'View Details'}
-                              </Button>
-                            </div>
-                          </div>
+              <LayoutGroup>
+                {filtered.map(incident => (
+                  <motion.div
+                    key={incident.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ 
+                      duration: 0.2,
+                      type: "spring",
+                      stiffness: 500,
+                      damping: 30
+                    }}
+                    layout="position"
+                    layoutId={`incident-card-${incident.id}`}
+                    style={{ 
+                      willChange: 'transform, opacity',
+                      transform: 'translateZ(0)',
+                      backfaceVisibility: 'hidden'
+                    }}
+                  >
+                    <Card className="bg-card/50 backdrop-blur-xl border border-border/50 transition-all duration-300 ease-in-out hover:shadow-lg dark:hover:bg-gray-800/50 hover:border-primary/50">
+                      <motion.div 
+                        className="flex flex-col sm:flex-row items-start gap-4 p-4"
+                        layout
+                      >
+                        <div className="pt-1">
+                          <Checkbox
+                            checked={selected.includes(incident.id)}
+                            onCheckedChange={() => toggleSelect(incident.id)}
+                            aria-label={`Select incident ${incident.title}`}
+                          />
                         </div>
                         
-                        <AnimatePresence mode="wait">
-                          {expanded.includes(incident.id) && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ 
-                                height: "auto", 
-                                opacity: 1,
-                                transition: {
-                                  height: { duration: 0.3, ease: "easeOut" },
-                                  opacity: { duration: 0.2, delay: 0.1 }
-                                }
-                              }}
-                              exit={{ 
-                                height: 0, 
-                                opacity: 0,
-                                transition: {
-                                  height: { duration: 0.3, ease: "easeIn" },
-                                  opacity: { duration: 0.2 }
-                                }
-                              }}
-                              className="mt-4 px-4 py-3 bg-background/50 backdrop-blur-sm rounded-md overflow-hidden"
-                            >
-                              <p 
-                                className="text-foreground"
-                                dangerouslySetInnerHTML={{ 
-                                  __html: highlight(incident.description, searchQuery) 
-                                }}
+                        <motion.div className="flex-1 w-full" layout>
+                          <motion.div 
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                            layout
+                          >
+                            <div>
+                              <h3 className="text-base sm:text-lg font-semibold" 
+                                  dangerouslySetInnerHTML={{ 
+                                    __html: highlight(incident.title, searchQuery) 
+                                  }} 
                               />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))
+                              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                                {new Date(incident.reported_at).toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
+                              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getSevBadgeStyle(incident.severity)}`}>
+                                {incident.severity}
+                              </span>
+                              <div className="flex gap-2">
+                                <IncidentEditDialog 
+                                  incident={incident}
+                                  onSave={updateIncident}
+                                />
+                                <IncidentDeleteDialog
+                                  incidentId={incident.id}
+                                  incidentTitle={incident.title}
+                                  onDelete={deleteIncident}
+                                />
+                                <motion.div whileTap={{ scale: 0.95 }}>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => toggleExpand(incident.id)}
+                                    aria-expanded={expanded.includes(incident.id)}
+                                    className="h-8"
+                                  >
+                                    {expanded.includes(incident.id) ? 'Hide Details' : 'View Details'}
+                                  </Button>
+                                </motion.div>
+                              </div>
+                            </div>
+                          </motion.div>
+                          
+                          <AnimatePresence mode="wait" initial={false}>
+                            {expanded.includes(incident.id) && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0, scale: 0.98 }}
+                                animate={{ 
+                                  height: "auto", 
+                                  opacity: 1,
+                                  scale: 1,
+                                  transition: {
+                                    type: "spring",
+                                    stiffness: 400,
+                                    damping: 40,
+                                    opacity: { duration: 0.15 }
+                                  }
+                                }}
+                                exit={{ 
+                                  height: 0, 
+                                  opacity: 0,
+                                  scale: 0.98,
+                                  transition: {
+                                    type: "spring",
+                                    stiffness: 400,
+                                    damping: 40,
+                                    opacity: { duration: 0.10 }
+                                  }
+                                }}
+                                className="mt-4 px-4 py-3 bg-background/50 backdrop-blur-sm rounded-md overflow-hidden will-change-transform"
+                                layout
+                                style={{
+                                  willChange: 'transform, opacity, height',
+                                  transformOrigin: 'top'
+                                }}
+                              >
+                                <motion.p 
+                                  initial={{ opacity: 0, y: 5 }}
+                                  animate={{ 
+                                    opacity: 1, 
+                                    y: 0,
+                                    transition: { delay: 0.05 }
+                                  }}
+                                  exit={{ opacity: 0 }}
+                                  className="text-foreground"
+                                  dangerouslySetInnerHTML={{ 
+                                    __html: highlight(incident.description, searchQuery) 
+                                  }}
+                                />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.div>
+                      </motion.div>
+                    </Card>
+                  </motion.div>
+                ))}
+              </LayoutGroup>
             )}
           </div>
         </AnimatePresence>
