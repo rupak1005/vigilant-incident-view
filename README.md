@@ -13,7 +13,6 @@ A fully featured, performant, and responsive AI Safety Incident Dashboard built 
 
 ---
 
-
 ## Screenshots
 
 
