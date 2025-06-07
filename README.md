@@ -6,7 +6,6 @@
 ![Recharts](https://img.shields.io/badge/Recharts-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)
 
 A fully featured, performant, and responsive AI Safety Incident Dashboard built using **React + TypeScript**. This project showcases modern UI/UX patterns, persistent state management, CSV export, rich animations with Framer Motion, and data visualizations powered by Recharts.
-
 [![Netlify Status](https://api.netlify.com/api/v1/badges/db718536-cb6a-44c1-b38c-f6c5396a4c4c/deploy-status)](https://app.netlify.com/sites/rupak-s/deploys)
 
  **Live Demo**: [https://incidentview.netlify.app](https://incidentview.netlify.app)
